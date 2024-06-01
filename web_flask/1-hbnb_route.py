@@ -1,4 +1,4 @@
-""""Script that starts a Flask web application """
+"""A script that starts a Flask web application """
 from flask import Flask
 
 app = Flask(__name__)
@@ -7,13 +7,13 @@ app.url_map.strict_slashes = False
 
 @app.route('/')
 def hello_hbnb():
-    """This Prints the  Web """
+    """ Print Web """
     return 'Hello HBNB!'
 
 
 @app.route('/hbnb')
 def hbnb():
-    """ This Prints the Web """
+    """ Print Web """
     return 'HBNB'
 
 
