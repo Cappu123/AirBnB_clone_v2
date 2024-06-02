@@ -1,86 +1,80 @@
 #!/usr/bin/python3
-"""DB storage
-"""
-import models
-from models.base_model import BaseModel, Base
-from models import city, state
-from os import environ, getenv
-from sqlalchemy.orm import scoped_session
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy import create_engine
-
-HBNB_MYSQL_USER = getenv('HBNB_MYSQL_USER')
-HBNB_MYSQL_PWD = getenv('HBNB_MYSQL_PWD')
-HBNB_MYSQL_HOST = getenv('HBNB_MYSQL_HOST')
-HBNB_MYSQL_DB = getenv('HBNB_MYSQL_DB')
+"""This is the file storage class for AirBnB"""
+import json
+from models.base_model import BaseModel
+from models.user import User
+from models.state import State
+from models.city import City
+from models.amenity import Amenity
+from models.place import Place
+from models.review import Review
+import shlex
 
 
-class DBStorage:
-    """database storage for mysql conversion
+class FileStorage:
+    """This class serializes instances to a JSON file and
+    deserializes JSON file to instances
+    Attributes:
+        __file_path: path to the JSON file
+        __objects: objects will be stored
     """
-    __engine = None
-    __session = None
-
-    def __init__(self):
-        """initializer for DBStorage"""
-        self.__engine = create_engine('mysql+mysqldb://{}:{}@{}/{}'.format(
-            HBNB_MYSQL_USER,
-            HBNB_MYSQL_PWD,
-            HBNB_MYSQL_HOST,
-            HBNB_MYSQL_DB), pool_pre_ping=True)
-        env = getenv("HBNB_ENV")
-        if (env == "test"):
-            Base.metadata.drop_all(self.__engine)
+    __file_path = "file.json"
+    __objects = {}
 
     def all(self, cls=None):
-        """Query the current session and list all instances of cls
+        """returns a dictionary
+        Return:
+            returns a dictionary of __object
         """
-        result = {}
+        dic = {}
         if cls:
-            for row in self.__session.query(cls).all():
-                key = "{}.{}".format(cls.__name__, row.id)
-                row.to_dict()
-                result.update({key: row})
+            dictionary = self.__objects
+            for key in dictionary:
+                partition = key.replace('.', ' ')
+                partition = shlex.split(partition)
+                if (partition[0] == cls.__name__):
+                    dic[key] = self.__objects[key]
+            return (dic)
         else:
-            for table in models.dummy_tables:
-                cls = models.dummy_tables[table]
-                for row in self.__session.query(cls).all():
-                    key = "{}.{}".format(cls.__name__, row.id)
-                    row.to_dict()
-                    result.update({key: row})
-        return result
-
-    def rollback(self):
-        """rollback changes
-        """
-        self.__session.rollback()
+            return self.__objects
 
     def new(self, obj):
-        """add object to current session
+        """sets __object to given obj
+        Args:
+            obj: given object
         """
-        self.__session.add(obj)
+        if obj:
+            key = "{}.{}".format(type(obj).__name__, obj.id)
+            self.__objects[key] = obj
 
     def save(self):
-        """commit current done work
+        """serialize the file path to JSON file path
         """
-        self.__session.commit()
-
-    def delete(self, obj=None):
-        """delete obj from session
-        """
-        if (obj is None):
-            self.__session.delete(obj)
+        my_dict = {}
+        for key, value in self.__objects.items():
+            my_dict[key] = value.to_dict()
+        with open(self.__file_path, 'w', encoding="UTF-8") as f:
+            json.dump(my_dict, f)
 
     def reload(self):
-        """reload the session
+        """serialize the file path to JSON file path
         """
-        Base.metadata.create_all(self.__engine)
-        Session = sessionmaker(bind=self.__engine, expire_on_commit=False)
-        Scope = scoped_session(Session)
-        self.__session = Scope()
+        try:
+            with open(self.__file_path, 'r', encoding="UTF-8") as f:
+                for key, value in (json.load(f)).items():
+                    value = eval(value["__class__"])(**value)
+                    self.__objects[key] = value
+        except FileNotFoundError:
+            pass
+
+    def delete(self, obj=None):
+        """ delete an existing element
+        """
+        if obj:
+            key = "{}.{}".format(type(obj).__name__, obj.id)
+            del self.__objects[key]
 
     def close(self):
-        """display our HBNB data
+        """ calls reload()
         """
-        self.__session.__class__.close(self.__session)
         self.reload()
