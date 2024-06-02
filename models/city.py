@@ -3,7 +3,7 @@
     contains City class to represent a city
     contains City class to represent a city
 """
-
+from models.state import State
 from models.base_model import BaseModel, Base
 from sqlalchemy.orm import relationship
 from sqlalchemy import Column, String, ForeignKey, Integer

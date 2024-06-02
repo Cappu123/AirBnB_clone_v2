@@ -32,7 +32,7 @@ class State(BaseModel, Base):
             city = key.replace('.', ' ')
             city = shlex.split(city)
             if (city[0] == 'City'):
-                listal.append(var[key])
+                listl.append(var[key])
         for elem in listl:
             if (elem.state_id == self.id):
                 result.append(elem)
