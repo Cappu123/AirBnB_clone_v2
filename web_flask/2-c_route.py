@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 """ A script that starts a Flask web application """
 
 
@@ -25,3 +26,5 @@ def c_is_fun(text):
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
+
+
